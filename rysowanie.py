@@ -82,8 +82,8 @@ def scatter_ro(all_osobno, all_razem):
     plt.show()
 
 def histogram_ro(all_osobno, all_razem):
-    plt.hist(all_osobno, bins=40, color='goldenrod', alpha=0.7, label='osobno')
-    plt.hist(all_razem, bins=40, color='teal', alpha=0.7, label='razem')
+    plt.hist(all_osobno, bins=10, color='goldenrod', alpha=0.7, label='osobno')
+    plt.hist(all_razem, bins=10, color='teal', alpha=0.7, label='razem')
     plt.legend()
     plt.show()
 

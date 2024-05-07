@@ -47,9 +47,9 @@ def remove_outliers(rr_intervals: List[float], verbose: bool = True, low_rri: in
 
     # Conversion RrInterval to Heart rate ==> rri (ms) =  1000 / (bpm / 60)
     # rri 2000 => bpm 30 / rri 300 => bpm 200
-    rr_intervals_cleaned = [rri for rri in rr_intervals if not np.isnan(rri)]
+    
     rr_intervals_cleaned_ = []
-    for rri in rr_intervals_cleaned:
+    for rri in rr_intervals:
         if high_rri >= rri >= low_rri:
             rr_intervals_cleaned_.append(rri)
         else:
