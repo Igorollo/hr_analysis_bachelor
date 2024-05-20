@@ -21,11 +21,16 @@ def wczytaj(path):
         data_osobno_pary = df[(df[1]=='osobno') & (df[2]=='para')]
         df_o = [data_osobno_nieznajomi[data_osobno_nieznajomi.columns[5:]].astype(float), data_osobno_znajomi[data_osobno_znajomi.columns[5:]].astype(float), data_osobno_pary[data_osobno_pary.columns[5:]].astype(float)]
         df_o_sur = [data_razem_nieznajomi[data_razem_nieznajomi.columns[3]].astype(float), data_razem_znajomi[data_razem_znajomi.columns[3]].astype(float), data_razem_pary[data_razem_pary.columns[3]].astype(float)]
-        lista_imion = df[(df[1]=='osobno')][df[(df[1]=='osobno')].columns[0]]
+        lista_imion = [data_razem_nieznajomi[data_razem_nieznajomi.columns[0]], data_razem_znajomi[data_razem_znajomi.columns[0]], data_razem_pary[data_razem_pary.columns[0]]]
         lista_imion_ost = []
-        for i in range(0, len(lista_imion)):
-            lista_imion_ost.append(lista_imion[i])
-        return df_o, df_r, df_r_sur, df_o_sur, lista_imion_ost+lista_imion_ost
+        lista_imion_ = []
+        for podlista in lista_imion:
+            podlista = [k for k in podlista]
+            lista_imion_ost.append(podlista+podlista)
+        for podlista in lista_imion:
+            podlista = [k for k in podlista]
+            lista_imion_.append(podlista)
+        return df_o, df_r, df_r_sur, df_o_sur, lista_imion_ost, lista_imion_
     except FileNotFoundError:
         print(f"File '{path}' not found. Please check the file path.")
         

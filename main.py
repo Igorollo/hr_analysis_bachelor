@@ -9,7 +9,7 @@ import pingouin as pg
 import rysowanie
 
 
-df_osobno, df_razem, df_r_sur, df_o_sur, lista_imion = reading_file.wczytaj("pomiary_licencjat_ostat.csv")
+df_osobno, df_razem, df_r_sur, df_o_sur, lista_imion, li = reading_file.wczytaj("pomiary_licencjat_ostat.csv")
 osobno = np.concatenate(df_osobno) 
 razem = np.concatenate(df_razem)
 syg_all = np.concatenate((osobno, razem))
@@ -37,23 +37,45 @@ for i in range(len(df_osobno)):
         df_osobno1 = analysis.standarize_data(df_osobno[i].iloc[i_o+1])
         df_o_intpol0 = analysis.interpolate_data(df_osobno0) 
         df_o_intpol1 = analysis.interpolate_data(df_osobno1)
-    
         lista_o[i, k], czas_max_corr_hr_o[i,k] = analysis.rolling_corr(df_o_intpol0, df_o_intpol1)
-        lista_o_rmssd[i,k], czas_max_corr_hrv_o[i,k] = analysis.rmssd_corr(df_o_intpol0, df_o_intpol1, 28)
-        lista_o_freq[i, k], czas_max_freq_o[i,k] = analysis.rolling_corr_f(df_o_intpol0, df_o_intpol1)
 
         df_razem0 = analysis.standarize_data(df_razem[i].iloc[i_o])
         df_razem1 = analysis.standarize_data(df_razem[i].iloc[i_o+1])
         df_r_intpol0 = analysis.interpolate_data(df_razem0) 
         df_r_intpol1 = analysis.interpolate_data(df_razem1)
         lista_r[i, k], czas_max_corr_hr_r[i,k] = analysis.rolling_corr(df_r_intpol0, df_r_intpol1)
-        lista_r_rmssd[i,k], czas_max_corr_hrv_r[i,k] = analysis.rmssd_corr(df_r_intpol0, df_r_intpol1, 28)
-        lista_r_freq[i, k], czas_max_freq_r[i,k] = analysis.rolling_corr_f(df_r_intpol0, df_r_intpol1)
-print(syg_all.shape)
-#analysis.compars(lista_imion, syg_all)
-#analysis.compars_f(lista_imion, syg_all)
-#analysis.compars_rm(lista_imion, syg_all)
-for lista_o, lista_r, tytul, czas_max_corr_hr_o, czas_max_corr_hr_r in zip([lista_o, lista_o_rmssd, lista_o_freq],[lista_r, lista_r_rmssd, lista_r_freq],['HR','HRV-RMSSD', 'HRV_FREQ'], [czas_max_corr_hr_o, czas_max_corr_hrv_o, czas_max_freq_o], [czas_max_corr_hr_r, czas_max_corr_hrv_r, czas_max_freq_r]):
+lista_org = lista_r
+nazwa = "HR"
+lista_imion1 = np.concatenate(li)
+lista = np.concatenate(df_razem)
+lista, lista_czas = analysis.compars(lista_imion1, lista)
+plt.hist(lista_czas)
+plt.savefig(nazwa+'czas.png', bbox_inches='tight')
+plt.show()
+
+plt.hist(lista, color = 'b')
+    #print(len(lista_imion1))
+    #print(len(lista))
+analysis.normality_check(lista)
+for warunki, strs, color in zip(lista_org, ["nieznajomi", "znajomi", "pary"], ['g', 'c', 'k']):
+        #plt.hist(lista, density=True)
+        plt.axvline(np.mean(warunki), label = strs, color = color)
+        with open(nazwa+".txt", "a") as file1:
+            # Writing data to a file
+            file1.write("\n" + strs + "\n")
+            file1.writelines(str(stats.ttest_ind(a=lista, b=warunki)))
+
+lista_org = np.concatenate(lista_r)
+plt.axvline(np.mean(lista_org), label = "razem", color = 'r')
+with open(nazwa+".txt", "a") as file1:
+            # Writing data to a file
+        file1.write("\n" + "RAZEM "+ "\n")
+        file1.writelines(str(stats.ttest_ind(a=lista, b= lista_org))) 
+plt.legend()
+plt.savefig(nazwa+'corr.png', bbox_inches='tight')
+plt.show()
+"""
+for lista_o, lista_r, tytul, czas_max_corr_hr_o, czas_max_corr_hr_r in zip([lista_o],[lista_r],['HR'], [czas_max_corr_hr_o], [czas_max_corr_hr_r]):
     all_osobno = np.concatenate(lista_o)
     all_razem = np.concatenate(lista_r)
     all_ = np.concatenate((all_osobno, all_razem))
@@ -87,7 +109,7 @@ for lista_o, lista_r, tytul, czas_max_corr_hr_o, czas_max_corr_hr_r in zip([list
 
     print(f_oneway(roznice[0], roznice[1], roznice[2]))
 
-    print(stats.ttest_rel(a=all_osobno, b=all_razem, alternative='less'))
+    print(stats.ttest_rel(a=all_osobno, b=all_razem))
     print("RAZEM", all_razem)
 
     razem_relacja = np.concatenate((lista_r[1], lista_r[2]))
@@ -104,6 +126,12 @@ for lista_o, lista_r, tytul, czas_max_corr_hr_o, czas_max_corr_hr_r in zip([list
     for check in range(0,3):
         print("osobno" + str(check))
         analysis.normality_check(lista_o[check])
+    print("normalnosc wszysktich danych")
+    analysis.normality_check(all_)
+    print("normalnosc wszysktich danych osobno")
+    analysis.normality_check(all_osobno)
+    print("normalnosc wszysktich danych razem")
+    analysis.normality_check(all_razem)
 
 
     result = [0 for i in range(all_osobno.shape[0])] + [1 for i in range(all_razem.shape[0])]
@@ -118,7 +146,7 @@ for lista_o, lista_r, tytul, czas_max_corr_hr_o, czas_max_corr_hr_r in zip([list
     "or": result,
     "znajomosci": znajomosci })
     aov = pg.anova(data=df, dv="korelacje", between=["or", "znajomosci"], detailed=True)
-    print(aov)
+    print(aov) """
 
 
 

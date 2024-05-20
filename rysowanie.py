@@ -10,10 +10,10 @@ def znajomosc_scatter(lista_o, lista_r, tytul):
     # Add the mean to the scatter plot
 
     plt.scatter(['osobno nieznajomi']*lista_o[0].shape[0], lista_o[0], s=10)
-    plt.scatter(['osobno znajomi']*lista_o[1].shape[0], lista_o[1], s=10)
-    plt.scatter(['osobno para']*lista_o[2].shape[0], lista_o[2], s=10)
     plt.scatter(['razem nieznajomi']*lista_r[0].shape[0], lista_r[0], s=10)
+    plt.scatter(['osobno znajomi']*lista_o[1].shape[0], lista_o[1], s=10)
     plt.scatter(['razem znajomi']*lista_r[1].shape[0], lista_r[1], s=10)
+    plt.scatter(['osobno para']*lista_o[2].shape[0], lista_o[2], s=10)
     plt.scatter(['razem para']*lista_r[2].shape[0], lista_r[2], s=10)
 
     for i, label in enumerate(['osobno nieznajomi', 'osobno znajomi', 'osobno para']):

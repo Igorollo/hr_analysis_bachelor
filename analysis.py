@@ -10,122 +10,64 @@ from scipy.integrate import trapz
 
 def compars(names, data):
     lista = []
+    lista_czas = []
     data = [standarize_data(i) for i in data]
     data = [interpolate_data(i) for i in data]
-    suma = 0
-    for i in range(0,len(names),2):
-        lista.append(rolling_corr(data[i], data[i+1])[0])
+    for i in range(len(names)):
         for j in range(len(names)):
-            if names[i] != names[j] and i != j and i+1 != j:
-                lista.append(rolling_corr(data[i], data[j])[0])
-        normality_check(lista)
-        z_scores = stats.zscore(lista)
-        if  z_scores[0]>1.96:
-            with open("porównania.txt", "a") as file1:
-                # Writing data to a file
-                file1.write("\n")
-                file1.writelines(names[i]+" "+str(z_scores[0]))
-            suma += 1
-        lista = []
-    for i in range(1,len(names),2):
-        lista.append(rolling_corr(data[i], data[i-1])[0])
-        for j in range(len(names)):
-            if names[i] != names[j] and i != j and i-1 != j:
-                lista.append(rolling_corr(data[i], data[j])[0])
-        normality_check(lista)
-        z_scores = stats.zscore(lista)
-        if  z_scores[0]>1.96:
-            with open("porównania.txt", "a") as file1:
-                # Writing data to a file
-                file1.write("\n")
-                file1.writelines(names[i]+" "+str(z_scores[0]))
-            suma += 1
-        lista = []
-    with open("porównania.txt", "a") as file1:
-        # Writing data to a file
-        file1.write("\n")
-        file1.writelines("ostateczna liczba osób ze statystycznie różna korelacją "+str(suma))
-    return suma
+            if names[i] != names[j]:
+                if i % 2:
+                    if j != i-1:
+                            p, t =rolling_corr(data[i], data[j])
+                            lista.append(p)
+                            lista_czas.append(t)
+                       
+                if i % 2==0:
+                    if j != i+1:
+                            p, t =rolling_corr(data[i], data[j])
+                            lista.append(p)
+                            lista_czas.append(t)
 
-def compars_f(names, data):
+    return lista, lista_czas
+
+def compars_f(names, data, sek, nazwa):
     lista = []
+    lista_czas = []
     data = [standarize_data(i) for i in data]
     data = [interpolate_data(i) for i in data]
-    suma = 0
-    for i in range(0,len(names),2):
-        lista.append(rolling_corr_f(data[i], data[i+1])[0])
+    for i in range(len(names)):
         for j in range(len(names)):
-            if names[i] != names[j] and i != j and i+1 != j:
-                lista.append(rolling_corr_f(data[i], data[j])[0])
-        normality_check(lista)
-        z_scores = stats.zscore(lista)
-        if  z_scores[0]>1.96:
-            with open("porównania_f.txt", "a") as file1:
-                # Writing data to a file
-                file1.write("\n")
-                file1.writelines(names[i]+" "+str(z_scores[0]))
-            suma += 1
-        lista = []
-    for i in range(1,len(names),2):
-        lista.append(rolling_corr_f(data[i], data[i-1])[0])
-        for j in range(len(names)):
-            if names[i] != names[j] and i != j and i-1 != j:
-                lista.append(rolling_corr_f(data[i], data[j])[0])
-        normality_check(lista)
-        z_scores = stats.zscore(lista)
-        if  z_scores[0]>1.96:
-            with open("porównania_f.txt", "a") as file1:
-                # Writing data to a file
-                file1.write("\n")
-                file1.writelines(names[i]+" "+str(z_scores[0]))
-            suma += 1
-        lista = []
-    with open("porównania_f.txt", "a") as file1:
-        # Writing data to a file
-        file1.write("\n")
-        file1.writelines("ostateczna liczba osób ze statystycznie różna korelacją "+str(suma))
-    return suma
+            if names[i] != names[j]:
+                if i % 2:
+                    if j != i-1:
+                        if nazwa == "rmssd_por":
+                            p, t =rmssd_corr(data[i], data[j], sek)
+                            lista.append(p)
+                            lista_czas.append(t)
+                        elif nazwa == "hrvstd_por":
+                            p, t =stdhrv_corr(data[i], data[j], sek)
+                            lista.append(p)
+                            lista_czas.append(t)
+                        elif nazwa == "nnstd_por":
+                            p, t =stdnn_corr(data[i], data[j], sek)
+                            lista.append(p)
+                            lista_czas.append(t)
+                if i % 2==0:
+                    if j != i+1:
+                        if nazwa == "rmssd_por":
+                            p, t =rmssd_corr(data[i], data[j], sek)
+                            lista.append(p)
+                            lista_czas.append(t)
+                        elif nazwa == "hrvstd_por":
+                            p, t =stdhrv_corr(data[i], data[j], sek)
+                            lista.append(p)
+                            lista_czas.append(t)
+                        elif nazwa == "nnstd_por":
+                            p, t =stdnn_corr(data[i], data[j], sek)
+                            lista.append(p)
+                            lista_czas.append(t)
 
-def compars_rm(names, data):
-    lista = []
-    data = [standarize_data(i) for i in data]
-    data = [interpolate_data(i) for i in data]
-    suma = 0
-    for i in range(0,len(names),2):
-        lista.append(rmssd_corr(data[i], data[i+1])[0])
-        for j in range(len(names)):
-            if names[i] != names[j] and i != j and i+1 != j:
-                lista.append(rmssd_corr(data[i], data[j])[0])
-        normality_check(lista)
-        z_scores = stats.zscore(lista)
-        if  z_scores[0]>1.96:
-            with open("porównania_rm.txt", "a") as file1:
-                # Writing data to a file
-                file1.write("\n")
-                file1.writelines(names[i]+" "+str(z_scores[0]))
-            suma += 1
-        lista = []
-    for i in range(1,len(names),2):
-        lista.append(rmssd_corr(data[i], data[i-1])[0])
-        for j in range(len(names)):
-            if names[i] != names[j] and i != j and i-1 != j:
-                lista.append(rmssd_corr(data[i], data[j])[0])
-        normality_check(lista)
-        z_scores = stats.zscore(lista)
-        if  z_scores[0]>1.96:
-            with open("porównania_rm.txt", "a") as file1:
-                # Writing data to a file
-                file1.write("\n")
-                file1.writelines(names[i]+" "+str(z_scores[0]))
-            suma += 1
-        lista = []
-    with open("porównania_rm.txt", "a") as file1:
-        # Writing data to a file
-        file1.write("\n")
-        file1.writelines("ostateczna liczba osób ze statystycznie różna korelacją "+str(suma))
-    return suma
-
-
+    return lista, lista_czas
         
 def standarize_data(data):
     # rr_intervals_list contains integer values of RR-interval
@@ -148,16 +90,21 @@ def standarize_data(data):
 
 def interpolate_data(rr_ecg):
     x_ecg = np.cumsum(rr_ecg)/1000
-
     cs = CubicSpline(x_ecg, rr_ecg, extrapolate=True)
     # sample rate for interpolation
     fs = 4
     steps = 1 / fs
-
     # sample using the interpolation function
     xx_ecg = np.arange(0, np.max(x_ecg), steps)
     rr_interpolated_ecg = cs(xx_ecg)
-    return rr_interpolated_ecg[20:]
+    """plt.scatter(x_ecg, rr_ecg, color = "orange", label = 'Orginalny sygnał')
+    plt.plot(xx_ecg[40:], rr_interpolated_ecg[40:], label = "Sygnał po interpolacji")
+    plt.xlabel("Czas (s)")
+    plt.ylabel("Odstępy czasowe pomiędzy kolejnymi załamkami N (ms)")
+    plt.xlim(0,60)
+    plt.legend()
+    plt.show()"""
+    return rr_interpolated_ecg[40:]
 
 
 def normality_check(data1, verbose = False):
@@ -171,10 +118,12 @@ def normality_check(data1, verbose = False):
         plt.ylabel('Frequency')
         plt.legend()
         plt.show()
-
+    sw_stat, p_value2 = stats.shapiro(data1)
     # Perform Kolmogorov-Smirnov test
     ks_statistic, p_value = kstest(data1_standardized, stats.norm.cdf)
+    print(f"Normality check SW = {sw_stat:.4f}, p-value = {p_value2:.4f}")
     print(f"Normality check KS = {ks_statistic:.4f}, p-value = {p_value:.4f}")
+    
 
 def rolling_corr(data1, data2):
 
@@ -182,81 +131,160 @@ def rolling_corr(data1, data2):
     data1 = pd.Series(1/data1[:minimum]) #TODO czy tak jest okey z minimum
     data2 = pd.Series(1/data2[:minimum])
     lista = []
-    for i in range(1, 32):
-        lista.append(stats.pearsonr(data2[i:], data1[:-i],alternative='two-sided')[0])
+    rang = [64-i for i in range(1,32)]
+    for i in rang:
+        lista.append(stats.pearsonr(data1[i:], data2[:-i],alternative='two-sided')[0])
 
     lista.append(stats.pearsonr(data1, data2, alternative='two-sided')[0])
     for i in range(1, 32):
-        lista.append(stats.pearsonr(data1[i:], data2[:-i],alternative='two-sided')[0])
-    return np.arctanh(np.max(lista)), (lista.index(np.max(lista))-32)/4
+        lista.append(stats.pearsonr(data2[i:], data1[:-i],alternative='two-sided')[0])
+    return np.arctanh(np.max(lista)), (lista.index(np.max(lista))-64)/4
 
-def rmssd_corr(data1, data2, sek = 30):
-    data1 = pd.Series(data1)
-    data2 = pd.Series(data2)
+def rmssd_corr(data1, data2, sek = 30, przes = 32):
+    overlap = int(4*sek/2 - 1)
+    minimum = min(len(data1), len(data2))
+    data1 = pd.Series(data1[:minimum])
+    data2 = pd.Series(data2[:minimum])
     lista = []
-    for i in range(1, 16):
-        odcinki_1 = []
-        odcinek = []
-        for k,j in enumerate(data2[i:]): #TODO odwróć kolejnosc
-            odcinek.append(j)
-            if (k+1)%(sek*4-1) == 0: #30 sekund (fs=4)
-                odcinki_1.append(odcinek)
-                odcinek = []
-        odcinki_2 = []
-        odcinek = []
-        for k,j in enumerate(data1[:-i]):
-            odcinek.append(j)
-            if (k+1)%(sek*4-1) == 0: #30 sekund (fs=4)
-                odcinki_2.append(odcinek)
-                odcinek = []
-        lista.append(rssmd(odcinki_1, odcinki_2)) #TODO czy minimum tak jak przy 1/nny
-    
-    odcinki_1 = []
-    odcinek = []
-    for k,j in enumerate(data2): #TODO odwróć kolejnosc
-        odcinek.append(j)
-        if (k+1)%(sek*4-1) == 0: #30 sekund (fs=4)
-                odcinki_1.append(odcinek)
-                odcinek = []
+    rang = [przes-i for i in range(0,przes)]
     odcinki_2 = []
-    odcinek = []
     for k,j in enumerate(data1):
-            odcinek.append(j)
-            if (k+1)%(sek*4-1) == 0: #30 sekund (fs=4)
-                odcinki_2.append(odcinek)
-                odcinek = []
-    lista.append(rssmd(odcinki_1, odcinki_2))
-    
-    for i in range(1, 16): #odwroc kolejnosc
+        if k%overlap == 0 and len(data1)-(k+1)>overlap and k != 0:
+            odcinki_2.append(data1[(k-overlap):(k+overlap)])
+    for i in range(1, przes):
         odcinki_1 = []
-        odcinek = []
+        for k,j in enumerate(data2[i:]): #TODO odwróć kolejnosc
+            if k%overlap == 0 and len(data2[i:])-(k+1)>overlap and k != 0: 
+                odcinki_1.append(data2[(k-overlap+i):(k+overlap+i)])
+        minimum = min(len(odcinki_1), len(odcinki_2))
+        lista.append(rssmd(odcinki_1[:minimum], odcinki_2[:minimum])) #TODO czy minimum tak jak przy 1/nny
+    
+    odcinki_2 = []
+    for k,j in enumerate(data2): #TODO odwróć kolejnosc
+        if k%overlap == 0 and len(data1)-(k+1)>overlap and k != 0:
+            odcinki_2.append(data1[(k-overlap):(k+overlap)])
+    odcinki_1 = []
+    for k,j in enumerate(data1):
+        if k%overlap == 0 and len(data2)-(k+1)>overlap and k != 0:
+            odcinki_1.append(data2[(k-overlap):(k+overlap)])
+    lista.append(rssmd(odcinki_1, odcinki_2))
+
+    odcinki_2 = []
+    for k,j in enumerate(data2):
+        if k%overlap == 0 and len(data2)-(k+1)>overlap and k != 0:
+            odcinki_2.append(data2[(k-overlap):(k+overlap)])
+    for i in rang:
+        odcinki_1 = []
         for k,j in enumerate(data1[i:]): #TODO odwróć kolejnosc
-            odcinek.append(j)
-            if (k+1)%(sek*4-1) == 0: #30 sekund (fs=4)
-                odcinki_1.append(odcinek)
-                odcinek = []
-        odcinki_2 = []
-        odcinek = []
-        for k,j in enumerate(data2[:-i]):
-            odcinek.append(j)
-            if (k+1)%(sek*4-1) == 0: #30 sekund (fs=4)
-                odcinki_2.append(odcinek)
-                odcinek = []
-        lista.append(rssmd(odcinki_1, odcinki_2)) #TODO czy minimum tak jak przy 1/nny
-    return np.arctanh(np.max(lista)), (lista.index(np.max(lista))-16)/4
+            if k%overlap == 0 and len(data1[i:])-(k+1)>overlap and k != 0: 
+                odcinki_1.append(data1[(k-overlap+i):(k+overlap+i)])
+        minimum = min(len(odcinki_1), len(odcinki_2))
+        lista.append(rssmd(odcinki_1[:minimum], odcinki_2[:minimum])) #TODO czy minimum tak jak przy 1/nny
+    return np.arctanh(np.max(lista)), (lista.index(np.max(lista))-przes)/4
 
 def rssmd(odcinki_1, odcinki_2):
     diff_nni_1 = [np.diff(odcinek) for odcinek in odcinki_1]
-    rmssd_1 = [np.sqrt(np.mean(odcinek ** 2)) for odcinek in diff_nni_1]
+    rmssd_1 = [np.sqrt(np.sum(odcinek ** 2)/(len(odcinek)-1)) for odcinek in diff_nni_1]
     diff_nni_2 = [np.diff(odcinek) for odcinek in odcinki_2]
-    rmssd_2 = [np.sqrt(np.mean(odcinek ** 2)) for odcinek in diff_nni_2]
+    rmssd_2 = [np.sqrt(np.sum(odcinek ** 2)/(len(odcinek)-1)) for odcinek in diff_nni_2]
     minimum = min(len(rmssd_1), len(rmssd_2))
     return stats.pearsonr(rmssd_1[:minimum], rmssd_2[:minimum], alternative='two-sided')[0]
-
+def sdnn(odcinki_1, odcinki_2):
+    std_1 = [np.std(odcinek) for odcinek in odcinki_1]
+    std_2 = [np.std(odcinek) for odcinek in odcinki_2]
+    minimum = min(len(std_1), len(std_2))
+    return stats.pearsonr(std_1[:minimum], std_2[:minimum], alternative='two-sided')[0]
+def stdhrv_corr(data1, data2, sek = 30, przes = 32):
+    overlap = int(4*sek/2 - 1)
+    minimum = min(len(data1), len(data2))
+    data1 = pd.Series(1/data1[:minimum])
+    data2 = pd.Series(1/data2[:minimum])
+    lista = []
+    odcinki_2 = []
+    rang = [przes-i for i in range(0,przes)]
+    odcinki_2 = []
+    for k,j in enumerate(data1):
+        if k%overlap == 0 and len(data1)-(k+1)>overlap and k != 0:
+            odcinki_2.append(data1[(k-overlap):(k+overlap)])
+    for i in range(1, przes):
+        odcinki_1 = []
+        for k,j in enumerate(data2[i:]): #TODO odwróć kolejnosc
+            if k%overlap == 0 and len(data2[i:])-(k+1)>overlap and k != 0: 
+                odcinki_1.append(data2[(k-overlap+i):(k+overlap+i)])
+        minimum = min(len(odcinki_1), len(odcinki_2))
+        lista.append(sdnn(odcinki_1[:minimum], odcinki_2[:minimum])) 
+    
+    odcinki_2 = []
+    for k,j in enumerate(data2): #TODO odwróć kolejnosc
+        if k%overlap == 0 and len(data1)-(k+1)>overlap and k != 0:
+            odcinki_2.append(data1[(k-overlap):(k+overlap)])
+    odcinki_1 = []
+    for k,j in enumerate(data1):
+        if k%overlap == 0 and len(data2)-(k+1)>overlap and k != 0:
+            odcinki_1.append(data2[(k-overlap):(k+overlap)])
+    lista.append(sdnn(odcinki_1, odcinki_2))
+    for k,j in enumerate(data2):
+        if k%overlap == 0 and len(data2)-(k+1)>overlap and k != 0:
+            odcinki_2.append(data2[(k-overlap):(k+overlap)])
+    for i in rang:
+        odcinki_1 = []
+        for k,j in enumerate(data1[i:]): #TODO odwróć kolejnosc
+            if k%overlap == 0 and len(data1[i:])-(k+1)>overlap and k != 0: 
+                odcinki_1.append(data1[(k-overlap+i):(k+overlap+i)])
+        minimum = min(len(odcinki_1), len(odcinki_2))
+        lista.append(sdnn(odcinki_1[:minimum], odcinki_2[:minimum])) #TODO czy minimum tak jak przy 1/nny
+    
+    return np.arctanh(np.max(lista)), (lista.index(np.max(lista))-przes)/4
+def stdnn_corr(data1, data2, sek = 30, przes= 32):
+    overlap = int(4*sek/2 - 1)
+    minimum = min(len(data1), len(data2))
+    data1 = pd.Series(data1[:minimum])
+    data2 = pd.Series(data2[:minimum])
+    lista = []
+    rang = [przes-i for i in range(0,przes)]
+    odcinki_2 = []
+    for k,j in enumerate(data1):
+        if k%overlap == 0 and len(data1)-(k+1)>overlap and k != 0:
+            odcinki_2.append(data1[(k-overlap):(k+overlap)])
+    for i in range(1, przes):
+        odcinki_1 = []
+        for k,j in enumerate(data2[i:]): #TODO odwróć kolejnosc
+            if k%overlap == 0 and len(data2[i:])-(k+1)>overlap and k != 0: 
+                odcinki_1.append(data2[(k-overlap+i):(k+overlap+i)])
+        minimum = min(len(odcinki_1), len(odcinki_2))
+        lista.append(sdnn(odcinki_1[:minimum], odcinki_2[:minimum])) #TODO czy minimum tak jak przy 1/nny
+    
+    odcinki_2 = []
+    for k,j in enumerate(data2): #TODO odwróć kolejnosc
+        if k%overlap == 0 and len(data1)-(k+1)>overlap and k != 0:
+            odcinki_2.append(data1[(k-overlap):(k+overlap)])
+    odcinki_1 = []
+    for k,j in enumerate(data1):
+        if k%overlap == 0 and len(data2)-(k+1)>overlap and k != 0:
+            odcinki_1.append(data2[(k-overlap):(k+overlap)])
+    lista.append(sdnn(odcinki_1, odcinki_2))
+    odcinki_2 = []
+    for k,j in enumerate(data2):
+        if k%overlap == 0 and len(data2)-(k+1)>overlap and k != 0:
+            odcinki_2.append(data2[(k-overlap):(k+overlap)])
+    for i in rang:
+        odcinki_1 = []
+        for k,j in enumerate(data1[i:]): #TODO odwróć kolejnosc
+            if k%overlap == 0 and len(data1[i:])-(k+1)>overlap and k != 0: 
+                odcinki_1.append(data1[(k-overlap+i):(k+overlap+i)])
+        minimum = min(len(odcinki_1), len(odcinki_2))
+        lista.append(sdnn(odcinki_1[:minimum], odcinki_2[:minimum])) #TODO czy minimum tak jak przy 1/nny
+    
+    return np.arctanh(np.max(lista)), (lista.index(np.max(lista))-przes)/4
 
 def frequency_domain(nns_interpolated, fs=4):
     # Estimate the spectral density using Welch's method
-    fxx, pxx = signal.welch(x=nns_interpolated, fs=fs)
+    fxx, pxx = signal.welch(x=nns_interpolated, fs=fs, nperseg=120)
+    """ plt.plot(fxx, pxx)
+    plt.xlim(0, 0.5)
+    plt.xlabel("Częstości (Hz)")
+    plt.ylabel("Amplituda")
+    plt.show()"""
     
     '''
     Segement found frequencies in the bands 
@@ -294,20 +322,20 @@ def frequency_domain(nns_interpolated, fs=4):
     results['LF/HF'] = (lf/hf)
     results['Fraction LF (nu)'] = lf_nu
     results['Fraction HF (nu)'] = hf_nu"""
-    return pxx
-def rolling_corr_f(data1, data2):
-
+    return fxx, pxx
+def rolling_corr_f(data1, data2, verbose = False):
     minimum = min(len(data1), len(data2))
     data1 = pd.Series(data1[:minimum])
     data2 = pd.Series(data2[:minimum])
-    lista = []
-    for i in range(1, 16):
-        lista.append(stats.pearsonr(frequency_domain(data2[i:]), frequency_domain(data1[:-i]),alternative='two-sided')[0])
-
-    lista.append(stats.pearsonr(frequency_domain(data1), frequency_domain(data2), alternative='two-sided')[0])
-    for i in range(1, 16):
-        lista.append(stats.pearsonr(frequency_domain(data1[i:]), frequency_domain(data2[:-i]),alternative='two-sided')[0])
-    return np.arctanh(np.max(lista)), (lista.index(np.max(lista))-16)/4
+    f1, p1 = frequency_domain(data1)
+    f2, p2 = frequency_domain(data2)
+    corr = stats.pearsonr(p1, p2, alternative='two-sided')[0]
+    print(len(f1))
+    if verbose and corr < 0.7:
+        plt.plot(f1, p1)
+        plt.plot(f2, p2)
+        plt.show()
+    return np.arctanh(corr)
 
 def freq_corr(data1, data2, sek = 30): #TODO if necesary
     data1 = pd.Series(data1)
