@@ -6,7 +6,31 @@ from scipy.interpolate import CubicSpline
 from scipy import stats
 import pandas as pd
 from scipy import signal
-from scipy.integrate import trapz
+import pingouin as pg
+def wykreslanka(razem, osobno, tytul):
+    for i in range(0,len(razem)):
+        all_razem = np.concatenate((razem[:i],razem[i+1:]))
+        all_osobno = np.concatenate((osobno[:i],osobno[i+1:]))
+        all_ = np.concatenate((all_razem, all_osobno))
+        result = [0 for i in range(all_osobno.shape[0])] + [1 for i in range(all_razem.shape[0])]
+        if i<12: znajomosci = [0 for i in range(11)] + [1 for i in range(12)]+ [2 for i in range(12)]+ [0 for i in range(11)]+ [1 for i in range(12)]+ [2 for i in range(12)]
+        elif 12<=i<24: znajomosci = [0 for i in range(12)] + [1 for i in range(11)]+ [2 for i in range(12)]+ [0 for i in range(12)]+ [1 for i in range(11)]+ [2 for i in range(12)]
+        elif 24<=i<36: znajomosci = [0 for i in range(12)] + [1 for i in range(12)]+ [2 for i in range(11)]+ [0 for i in range(12)]+ [1 for i in range(12)]+ [2 for i in range(11)]
+        else: print("ERRRRRORRRRRRRRRR")
+        subjects = list(range(1, len(all_)//2+1))+list(range(1, len(all_)//2+1))
+
+
+        df = pd.DataFrame({
+            "subid": subjects,
+        "korelacje": all_,
+        "or": result,
+        "znajomosci": znajomosci })
+        aov = pg.mixed_anova(dv='korelacje', between='znajomosci',
+                    within='or', subject='subid', data=df)
+        with open("wykrelanie"+tytul, "a") as file1:
+                # Writing data to a file
+                file1.writelines("\n")
+                file1.writelines(str(aov))
 
 def compars(names, data):
     lista = []
@@ -14,7 +38,7 @@ def compars(names, data):
     data = [standarize_data(i) for i in data]
     data = [interpolate_data(i) for i in data]
     for i in range(len(names)):
-        for j in range(len(names)):
+        for j in range(i, len(names)):
             if names[i] != names[j]:
                 if i % 2:
                     if j != i-1:
@@ -30,13 +54,14 @@ def compars(names, data):
 
     return lista, lista_czas
 
-def compars_f(names, data, sek, nazwa):
+def compars_f(names, data, sek, nazwa, pre = True):
     lista = []
     lista_czas = []
-    data = [standarize_data(i) for i in data]
-    data = [interpolate_data(i) for i in data]
+    if pre:
+        data = [standarize_data(i) for i in data]
+        data = [interpolate_data(i) for i in data]
     for i in range(len(names)):
-        for j in range(len(names)):
+        for j in range(i, len(names)):
             if names[i] != names[j]:
                 if i % 2:
                     if j != i-1:
@@ -52,7 +77,7 @@ def compars_f(names, data, sek, nazwa):
                             p, t =stdnn_corr(data[i], data[j], sek)
                             lista.append(p)
                             lista_czas.append(t)
-                if i % 2==0:
+                elif i % 2==0:
                     if j != i+1:
                         if nazwa == "rmssd_por":
                             p, t =rmssd_corr(data[i], data[j], sek)
@@ -104,7 +129,7 @@ def interpolate_data(rr_ecg):
     plt.xlim(0,60)
     plt.legend()
     plt.show()"""
-    return rr_interpolated_ecg[40:]
+    return rr_interpolated_ecg[fs*5:]
 
 
 def normality_check(data1, verbose = False):
@@ -131,44 +156,26 @@ def rolling_corr(data1, data2):
     data1 = pd.Series(1/data1[:minimum]) #TODO czy tak jest okey z minimum
     data2 = pd.Series(1/data2[:minimum])
     lista = []
-    rang = [64-i for i in range(1,32)]
+    rang = [32-i for i in range(1,32)]
     for i in rang:
         lista.append(stats.pearsonr(data1[i:], data2[:-i],alternative='two-sided')[0])
 
     lista.append(stats.pearsonr(data1, data2, alternative='two-sided')[0])
-    for i in range(1, 32):
+    for i in range(1, 33):
         lista.append(stats.pearsonr(data2[i:], data1[:-i],alternative='two-sided')[0])
-    return np.arctanh(np.max(lista)), (lista.index(np.max(lista))-64)/4
+    return np.arctanh(np.max(lista)), (lista.index(np.max(lista))-32)/4
 
-def rmssd_corr(data1, data2, sek = 30, przes = 32):
-    overlap = int(4*sek/2 - 1)
+def rmssd_corr(data1, data2, sek = 30, fs= 4):
+    przes = fs*4
+    overlap = int(fs*sek/2 - 1)
     minimum = min(len(data1), len(data2))
     data1 = pd.Series(data1[:minimum])
     data2 = pd.Series(data2[:minimum])
+    czasek = []
     lista = []
     rang = [przes-i for i in range(0,przes)]
-    odcinki_2 = []
-    for k,j in enumerate(data1):
-        if k%overlap == 0 and len(data1)-(k+1)>overlap and k != 0:
-            odcinki_2.append(data1[(k-overlap):(k+overlap)])
-    for i in range(1, przes):
-        odcinki_1 = []
-        for k,j in enumerate(data2[i:]): #TODO odwróć kolejnosc
-            if k%overlap == 0 and len(data2[i:])-(k+1)>overlap and k != 0: 
-                odcinki_1.append(data2[(k-overlap+i):(k+overlap+i)])
-        minimum = min(len(odcinki_1), len(odcinki_2))
-        lista.append(rssmd(odcinki_1[:minimum], odcinki_2[:minimum])) #TODO czy minimum tak jak przy 1/nny
     
-    odcinki_2 = []
-    for k,j in enumerate(data2): #TODO odwróć kolejnosc
-        if k%overlap == 0 and len(data1)-(k+1)>overlap and k != 0:
-            odcinki_2.append(data1[(k-overlap):(k+overlap)])
-    odcinki_1 = []
-    for k,j in enumerate(data1):
-        if k%overlap == 0 and len(data2)-(k+1)>overlap and k != 0:
-            odcinki_1.append(data2[(k-overlap):(k+overlap)])
-    lista.append(rssmd(odcinki_1, odcinki_2))
-
+    
     odcinki_2 = []
     for k,j in enumerate(data2):
         if k%overlap == 0 and len(data2)-(k+1)>overlap and k != 0:
@@ -178,6 +185,18 @@ def rmssd_corr(data1, data2, sek = 30, przes = 32):
         for k,j in enumerate(data1[i:]): #TODO odwróć kolejnosc
             if k%overlap == 0 and len(data1[i:])-(k+1)>overlap and k != 0: 
                 odcinki_1.append(data1[(k-overlap+i):(k+overlap+i)])
+        minimum = min(len(odcinki_1), len(odcinki_2))
+        lista.append(rssmd(odcinki_1[:minimum], odcinki_2[:minimum])) #TODO czy minimum tak jak przy 1/nny
+
+    odcinki_2 = []
+    for k,j in enumerate(data1):
+        if k%overlap == 0 and len(data1)-(k+1)>overlap and k != 0:
+            odcinki_2.append(data1[(k-overlap):(k+overlap)])
+    for i in range(1, przes+1):
+        odcinki_1 = []
+        for k,j in enumerate(data2[i:]): #TODO odwróć kolejnosc
+            if k%overlap == 0 and len(data2[i:])-(k+1)>overlap and k != 0: 
+                odcinki_1.append(data2[(k-overlap+i):(k+overlap+i)])
         minimum = min(len(odcinki_1), len(odcinki_2))
         lista.append(rssmd(odcinki_1[:minimum], odcinki_2[:minimum])) #TODO czy minimum tak jak przy 1/nny
     return np.arctanh(np.max(lista)), (lista.index(np.max(lista))-przes)/4
@@ -194,19 +213,19 @@ def sdnn(odcinki_1, odcinki_2):
     std_2 = [np.std(odcinek) for odcinek in odcinki_2]
     minimum = min(len(std_1), len(std_2))
     return stats.pearsonr(std_1[:minimum], std_2[:minimum], alternative='two-sided')[0]
-def stdhrv_corr(data1, data2, sek = 30, przes = 32):
-    overlap = int(4*sek/2 - 1)
+def stdhrv_corr(data1, data2, sek = 30, fs=4):
+    przes = fs*4
+    overlap = int(fs*sek/2 - 1)
     minimum = min(len(data1), len(data2))
     data1 = pd.Series(1/data1[:minimum])
     data2 = pd.Series(1/data2[:minimum])
     lista = []
     odcinki_2 = []
     rang = [przes-i for i in range(0,przes)]
-    odcinki_2 = []
     for k,j in enumerate(data1):
         if k%overlap == 0 and len(data1)-(k+1)>overlap and k != 0:
             odcinki_2.append(data1[(k-overlap):(k+overlap)])
-    for i in range(1, przes):
+    for i in range(1, przes+1):
         odcinki_1 = []
         for k,j in enumerate(data2[i:]): #TODO odwróć kolejnosc
             if k%overlap == 0 and len(data2[i:])-(k+1)>overlap and k != 0: 
@@ -223,6 +242,7 @@ def stdhrv_corr(data1, data2, sek = 30, przes = 32):
         if k%overlap == 0 and len(data2)-(k+1)>overlap and k != 0:
             odcinki_1.append(data2[(k-overlap):(k+overlap)])
     lista.append(sdnn(odcinki_1, odcinki_2))
+    odcinki_2 = []
     for k,j in enumerate(data2):
         if k%overlap == 0 and len(data2)-(k+1)>overlap and k != 0:
             odcinki_2.append(data2[(k-overlap):(k+overlap)])
@@ -235,22 +255,23 @@ def stdhrv_corr(data1, data2, sek = 30, przes = 32):
         lista.append(sdnn(odcinki_1[:minimum], odcinki_2[:minimum])) #TODO czy minimum tak jak przy 1/nny
     
     return np.arctanh(np.max(lista)), (lista.index(np.max(lista))-przes)/4
-def stdnn_corr(data1, data2, sek = 30, przes= 32):
-    overlap = int(4*sek/2 - 1)
+def stdnn_corr(data1, data2, sek = 30, fs=4):
+    przes = fs*4
+    overlap = int(fs*sek/2 - 1)
     minimum = min(len(data1), len(data2))
     data1 = pd.Series(data1[:minimum])
     data2 = pd.Series(data2[:minimum])
     lista = []
     rang = [przes-i for i in range(0,przes)]
     odcinki_2 = []
-    for k,j in enumerate(data1):
-        if k%overlap == 0 and len(data1)-(k+1)>overlap and k != 0:
-            odcinki_2.append(data1[(k-overlap):(k+overlap)])
-    for i in range(1, przes):
+    for k,j in enumerate(data2):
+        if k%overlap == 0 and len(data2)-(k+1)>overlap and k != 0:
+            odcinki_2.append(data2[(k-overlap):(k+overlap)])
+    for i in rang:
         odcinki_1 = []
-        for k,j in enumerate(data2[i:]): #TODO odwróć kolejnosc
-            if k%overlap == 0 and len(data2[i:])-(k+1)>overlap and k != 0: 
-                odcinki_1.append(data2[(k-overlap+i):(k+overlap+i)])
+        for k,j in enumerate(data1[i:]): #TODO odwróć kolejnosc
+            if k%overlap == 0 and len(data1[i:])-(k+1)>overlap and k != 0: 
+                odcinki_1.append(data1[(k-overlap+i):(k+overlap+i)])
         minimum = min(len(odcinki_1), len(odcinki_2))
         lista.append(sdnn(odcinki_1[:minimum], odcinki_2[:minimum])) #TODO czy minimum tak jak przy 1/nny
     
@@ -263,15 +284,16 @@ def stdnn_corr(data1, data2, sek = 30, przes= 32):
         if k%overlap == 0 and len(data2)-(k+1)>overlap and k != 0:
             odcinki_1.append(data2[(k-overlap):(k+overlap)])
     lista.append(sdnn(odcinki_1, odcinki_2))
+    
     odcinki_2 = []
-    for k,j in enumerate(data2):
-        if k%overlap == 0 and len(data2)-(k+1)>overlap and k != 0:
-            odcinki_2.append(data2[(k-overlap):(k+overlap)])
-    for i in rang:
+    for k,j in enumerate(data1):
+        if k%overlap == 0 and len(data1)-(k+1)>overlap and k != 0:
+            odcinki_2.append(data1[(k-overlap):(k+overlap)])
+    for i in range(1, przes+1):
         odcinki_1 = []
-        for k,j in enumerate(data1[i:]): #TODO odwróć kolejnosc
-            if k%overlap == 0 and len(data1[i:])-(k+1)>overlap and k != 0: 
-                odcinki_1.append(data1[(k-overlap+i):(k+overlap+i)])
+        for k,j in enumerate(data2[i:]): #TODO odwróć kolejnosc
+            if k%overlap == 0 and len(data2[i:])-(k+1)>overlap and k != 0: 
+                odcinki_1.append(data2[(k-overlap+i):(k+overlap+i)])
         minimum = min(len(odcinki_1), len(odcinki_2))
         lista.append(sdnn(odcinki_1[:minimum], odcinki_2[:minimum])) #TODO czy minimum tak jak przy 1/nny
     
@@ -410,4 +432,36 @@ def freq_corr(data1, data2, sek = 30): #TODO if necesary
                 odcinek = []
         lista.append(rssmd(odcinki_1, odcinki_2)) #TODO czy minimum tak jak przy 1/nny
     return np.arctanh(np.max(lista)), (lista.index(np.max(lista))-32)/4
-    
+
+
+def rmssd_p(syg_vis, overlap):
+        odcinki_2 = []
+        for k,j in enumerate(syg_vis): #TODO odwróć kolejnosc
+            if k%overlap == 0 and len(syg_vis)-(k+1)>overlap and k != 0:
+                odcinki_2.append(syg_vis[(k-overlap):(k+overlap)])
+        diff_nni_1 = [np.diff(odcinek) for odcinek in odcinki_2]
+        rmssd_1 = [np.sqrt(np.sum(odcinek ** 2)/(len(odcinek)-1)) for odcinek in diff_nni_1]
+        return rmssd_1
+def nnsd_p(syg_vis, overlap):
+    odcinki_2 = []
+    for k,j in enumerate(syg_vis): #TODO odwróć kolejnosc
+            if k%overlap == 0 and len(syg_vis)-(k+1)>overlap and k != 0:
+                odcinki_2.append(syg_vis[(k-overlap):(k+overlap)])
+    std_1 = [np.std(odcinek) for odcinek in odcinki_2]
+    return std_1
+def hrsd_p(syg_vis, overlap):
+    syg_vis = 1/syg_vis
+    odcinki_2 = []
+    for k,j in enumerate(syg_vis): #TODO odwróć kolejnosc
+            if k%overlap == 0 and len(syg_vis)-(k+1)>overlap and k != 0:
+                odcinki_2.append(syg_vis[(k-overlap):(k+overlap)])
+    std_1 = [np.std(odcinek) for odcinek in odcinki_2]
+    return std_1
+
+def randomHR(signal):
+    macierz = np.zeros((72,len(signal)))
+
+    for k in range(macierz.shape[0]):
+        random_values = np.random.normal(loc=800, scale=250, size=len(signal))
+        macierz[k] = random_values
+    return macierz
